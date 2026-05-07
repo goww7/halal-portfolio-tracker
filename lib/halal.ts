@@ -10,20 +10,36 @@ export type Holding = { symbol: string; shares: number };
 
 export type ScanItem = {
   symbol: string;
-  status: string;
-  methodology?: string;
-  ratios?: Record<string, number>;
-  reasons?: string[];
+  is_compliant: boolean | null;
+  business_screen_pass: boolean | null;
+  business_screen_reason?: string;
+  financial_screen_pass: boolean | null;
+  methodology: string;
+  per_methodology: {
+    aaoifi: boolean | null;
+    djim: boolean | null;
+    ftse: boolean | null;
+    msci: boolean | null;
+    sp: boolean | null;
+  };
+  purification_rate: number | null;
+  sector?: string;
+  industry?: string;
   price?: number;
+  error?: string | null;
 };
 
 export type ScanResult = {
   results: ScanItem[];
   summary: {
-    compliant_pct: number | null;
-    purification_owed: number | null;
-    total_value: number | null;
     holdings: number;
+    compliant_count: number;
+    non_compliant_count: number;
+    pending_count: number;
+    compliant_pct: number | null;
+    avg_purification_rate: number | null;
+    total_value: number | null;
+    compliant_value: number | null;
   };
 };
 
@@ -43,7 +59,7 @@ async function call(method: string, path: string, body?: unknown) {
     headers: {
       'X-API-Key': key(),
       'Content-Type': 'application/json',
-      'User-Agent': 'halal-portfolio-tracker/0.1',
+      'User-Agent': 'halal-portfolio-tracker/0.2',
     },
     body: body ? JSON.stringify(body) : undefined,
     cache: 'no-store',
@@ -58,77 +74,100 @@ async function call(method: string, path: string, body?: unknown) {
   return json;
 }
 
-function classify(raw: string): 'pass' | 'fail' | 'warn' {
-  // Order matters: "non-compliant" contains "compliant", so fail must be checked first.
-  if (/fail|non[\s-]?compliant|haram|reject/i.test(raw)) return 'fail';
-  if (/pass|compliant|halal|accept/i.test(raw)) return 'pass';
+export function classifyItem(item: ScanItem): 'pass' | 'fail' | 'warn' {
+  if (item.is_compliant === true) return 'pass';
+  if (item.is_compliant === false) return 'fail';
   return 'warn';
 }
 
-export function badgeFor(status: string) {
-  const cls = classify(status);
-  return {
-    label: cls === 'pass' ? 'Halal' : cls === 'fail' ? 'Non-compliant' : status || 'Unknown',
-    icon: cls === 'pass' ? '✅' : cls === 'fail' ? '❌' : '⚠️',
-    color: cls,
-  };
+export function statusWord(item: ScanItem): string {
+  if (item.error) return 'Error';
+  if (item.is_compliant === true) return 'Compliant';
+  if (item.is_compliant === false) return 'Non-compliant';
+  return 'Pending';
 }
 
 export async function scanPortfolio(holdings: Holding[]): Promise<ScanResult> {
   const symbols = holdings.map((h) => h.symbol.toUpperCase());
 
-  // Don't swallow auth errors — they masquerade as 'all non-compliant' downstream.
-  // If the screen call fails, propagate. Quote failures are non-fatal (we just
-  // skip price/value computation).
+  // Auth errors must propagate; quote failures stay non-fatal (cosmetic only).
   const [scan, quotes] = await Promise.all([
     call('POST', '/api/portfolio/scan', { symbols }),
     call('POST', '/api/quotes/batch', { symbols }).catch(() => null),
   ]);
 
-  const rawResults: any[] = scan?.results || scan?.holdings || [];
-  const quoteMap = new Map<string, number>();
-  const quoteList: any[] = quotes?.quotes || quotes?.results || quotes || [];
-  for (const q of Array.isArray(quoteList) ? quoteList : []) {
-    const sym = (q.symbol || q.ticker || '').toUpperCase();
-    const price = q.price ?? q.regularMarketPrice;
-    if (sym && typeof price === 'number') quoteMap.set(sym, price);
-  }
+  // /api/portfolio/scan returns { results: { AAPL: {...}, MSFT: {...} }, summary: {...} }
+  const rawResults: Record<string, any> = scan?.results || {};
+  // /api/quotes/batch returns { AAPL: { price: ..., ... }, MSFT: {...} }
+  const quoteMap: Record<string, any> = quotes && typeof quotes === 'object' ? quotes : {};
 
-  const results: ScanItem[] = rawResults.map((r) => {
-    const symbol = (r.symbol || r.ticker || '').toUpperCase();
+  // Preserve user's input ordering rather than the API's response order.
+  const results: ScanItem[] = symbols.map((sym) => {
+    const r = rawResults[sym] || {};
+    const q = quoteMap[sym];
     return {
-      symbol,
-      status: r.status || r.compliance || r.verdict || 'unknown',
-      methodology: r.methodology || r.standard,
-      ratios: r.ratios || r.financial_ratios,
-      reasons: r.reasons || r.failures,
-      price: quoteMap.get(symbol),
+      symbol: sym,
+      is_compliant: typeof r.is_compliant === 'boolean' ? r.is_compliant : null,
+      business_screen_pass:
+        typeof r.business_screen_pass === 'boolean' ? r.business_screen_pass : null,
+      business_screen_reason: r.business_screen_reason,
+      financial_screen_pass:
+        typeof r.financial_screen_pass === 'boolean' ? r.financial_screen_pass : null,
+      methodology: 'AAOIFI',
+      per_methodology: {
+        aaoifi: typeof r.aaoifi_compliant === 'boolean' ? r.aaoifi_compliant : null,
+        djim: typeof r.djim_compliant === 'boolean' ? r.djim_compliant : null,
+        ftse: typeof r.ftse_compliant === 'boolean' ? r.ftse_compliant : null,
+        msci: typeof r.msci_compliant === 'boolean' ? r.msci_compliant : null,
+        sp: typeof r.sp_compliant === 'boolean' ? r.sp_compliant : null,
+      },
+      purification_rate: typeof r.purification_rate === 'number' ? r.purification_rate : null,
+      sector: r.sector,
+      industry: r.industry,
+      price: typeof q?.price === 'number' ? q.price : undefined,
+      error: r.error_message || r.error || null,
     };
   });
 
+  // Value-weighted compliance: more meaningful than count-based for a portfolio.
   let totalValue = 0;
   let compliantValue = 0;
-  let purification = 0;
-  for (const h of holdings) {
-    const sym = h.symbol.toUpperCase();
-    const price = quoteMap.get(sym) ?? 0;
+  for (let i = 0; i < holdings.length; i++) {
+    const h = holdings[i];
+    const item = results[i];
+    const price = item.price ?? 0;
     const value = price * h.shares;
     totalValue += value;
-    const item = results.find((r) => r.symbol === sym);
-    if (item && classify(item.status) === 'pass') compliantValue += value;
-    if (item) {
-      const purRatio = (item.ratios as any)?.purification_ratio;
-      if (typeof purRatio === 'number') purification += purRatio * value;
-    }
+    if (item.is_compliant === true) compliantValue += value;
   }
+
+  const apiSummary = scan?.summary || {};
+  const compliantCount = results.filter((r) => r.is_compliant === true).length;
+  const nonCompliantCount = results.filter((r) => r.is_compliant === false).length;
+  const pendingCount = results.filter((r) => r.is_compliant == null).length;
+
+  // Prefer value-weighted compliance when we have prices, else fall back to count.
+  const compliant_pct =
+    totalValue > 0
+      ? (compliantValue / totalValue) * 100
+      : results.length > 0
+        ? (compliantCount / results.length) * 100
+        : null;
 
   return {
     results,
     summary: {
-      compliant_pct: totalValue > 0 ? (compliantValue / totalValue) * 100 : null,
-      purification_owed: purification > 0 ? Number(purification.toFixed(2)) : null,
+      holdings: results.length,
+      compliant_count: compliantCount,
+      non_compliant_count: nonCompliantCount,
+      pending_count: pendingCount,
+      compliant_pct,
+      avg_purification_rate:
+        typeof apiSummary.avg_purification_rate === 'number'
+          ? apiSummary.avg_purification_rate
+          : null,
       total_value: totalValue > 0 ? Number(totalValue.toFixed(2)) : null,
-      holdings: holdings.length,
+      compliant_value: totalValue > 0 ? Number(compliantValue.toFixed(2)) : null,
     },
   };
 }

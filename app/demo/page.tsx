@@ -4,23 +4,36 @@
 import { ResultsPanel } from '@/components/ResultsPanel';
 import { StarMark } from '@/components/StarMark';
 
+const mk = (overrides: any) => ({
+  business_screen_pass: true,
+  financial_screen_pass: true,
+  business_screen_reason: undefined,
+  methodology: 'AAOIFI',
+  purification_rate: 0.012,
+  ...overrides,
+});
+
 const FIXTURE = {
   results: [
-    { symbol: 'AAPL', status: 'compliant',     methodology: 'AAOIFI', price: 188.42 },
-    { symbol: 'MSFT', status: 'compliant',     methodology: 'AAOIFI', price: 412.16 },
-    { symbol: 'JNJ',  status: 'compliant',     methodology: 'AAOIFI', price: 156.08 },
-    { symbol: 'TSLA', status: 'compliant',     methodology: 'AAOIFI', price: 247.93 },
-    { symbol: 'JPM',  status: 'non-compliant', methodology: 'AAOIFI', price: 211.50 },
-    { symbol: 'BA',   status: 'non-compliant', methodology: 'AAOIFI', price:  74.18 },
-    { symbol: 'NVDA', status: 'compliant',     methodology: 'AAOIFI', price: 138.07 },
-    { symbol: 'KO',   status: 'compliant',     methodology: 'AAOIFI', price:  62.41 },
-    { symbol: 'F',    status: 'non-compliant', methodology: 'AAOIFI', price:  10.32 },
+    mk({ symbol: 'AAPL', is_compliant: true,  sector: 'Technology', price: 288.17 }),
+    mk({ symbol: 'MSFT', is_compliant: true,  sector: 'Technology', price: 420.95 }),
+    mk({ symbol: 'JNJ',  is_compliant: true,  sector: 'Healthcare', price: 156.08 }),
+    mk({ symbol: 'TSLA', is_compliant: true,  sector: 'Consumer Cyclical', price: 247.93 }),
+    mk({ symbol: 'JPM',  is_compliant: false, business_screen_pass: false, business_screen_reason: 'Conventional banking — interest-based revenue exceeds threshold.', sector: 'Financial Services', price: 211.50 }),
+    mk({ symbol: 'BA',   is_compliant: false, business_screen_pass: false, business_screen_reason: 'Defense exposure exceeds revenue threshold.', sector: 'Industrials', price: 74.18 }),
+    mk({ symbol: 'NVDA', is_compliant: true,  sector: 'Technology', price: 138.07 }),
+    mk({ symbol: 'KO',   is_compliant: true,  sector: 'Consumer Defensive', price: 62.41 }),
+    mk({ symbol: 'F',    is_compliant: false, business_screen_pass: true, financial_screen_pass: false, business_screen_reason: 'Debt-to-market-cap ratio exceeds 33%.', sector: 'Consumer Cyclical', price: 10.32 }),
   ],
   summary: {
-    compliant_pct: 73.4,
-    purification_owed: 47,
-    total_value: 18420,
     holdings: 9,
+    compliant_count: 6,
+    non_compliant_count: 3,
+    pending_count: 0,
+    compliant_pct: 73.4,
+    avg_purification_rate: 2.12,
+    total_value: 18420,
+    compliant_value: 13520,
   },
 };
 

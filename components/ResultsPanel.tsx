@@ -5,32 +5,42 @@ import { StarMark } from './StarMark';
 
 type Item = {
   symbol: string;
-  status: string;
+  is_compliant: boolean | null;
+  business_screen_pass: boolean | null;
+  business_screen_reason?: string;
+  financial_screen_pass: boolean | null;
   methodology?: string;
+  purification_rate?: number | null;
+  sector?: string;
   price?: number;
-  reasons?: string[];
+  error?: string | null;
 };
 
 type Result = {
   results: Item[];
   summary: {
-    compliant_pct: number | null;
-    purification_owed: number | null;
-    total_value: number | null;
     holdings: number;
+    compliant_count: number;
+    non_compliant_count: number;
+    pending_count: number;
+    compliant_pct: number | null;
+    avg_purification_rate: number | null;
+    total_value: number | null;
+    compliant_value: number | null;
   };
 };
 
-function classify(s: string): 'pass' | 'fail' | 'warn' {
-  // Order matters: "non-compliant" contains "compliant", so fail must be checked first.
-  if (/fail|non[\s-]?compliant|haram|reject/i.test(s)) return 'fail';
-  if (/pass|compliant|halal|accept/i.test(s)) return 'pass';
+function classify(item: Item): 'pass' | 'fail' | 'warn' {
+  if (item.error) return 'warn';
+  if (item.is_compliant === true) return 'pass';
+  if (item.is_compliant === false) return 'fail';
   return 'warn';
 }
 
-function statusWord(s: string) {
-  const c = classify(s);
-  return c === 'pass' ? 'Compliant' : c === 'fail' ? 'Non-compliant' : 'Under review';
+function statusWord(item: Item) {
+  if (item.error) return 'Error';
+  const c = classify(item);
+  return c === 'pass' ? 'Compliant' : c === 'fail' ? 'Non-compliant' : 'Pending';
 }
 
 export function ResultsPanel({
@@ -94,9 +104,6 @@ function ResultsView({ result }: { result: Result }) {
         ? 'Substantial non-compliance.'
         : 'Mixed reading.';
 
-  const passCount = results.filter((r) => classify(r.status) === 'pass').length;
-  const failCount = results.filter((r) => classify(r.status) === 'fail').length;
-
   return (
     <div className="border-l border-rule pl-6 md:pl-10">
       {/* === Hero — pull-quote stat === */}
@@ -112,15 +119,16 @@ function ResultsView({ result }: { result: Result }) {
 
         <div
           className="display hero-pct flex items-baseline gap-2"
-          style={{ color: cls === 'pass' ? 'var(--moss)' : cls === 'fail' ? 'var(--clay)' : 'var(--saffron)' }}
+          style={{
+            color:
+              cls === 'pass' ? 'var(--moss)' : cls === 'fail' ? 'var(--clay)' : 'var(--saffron)',
+          }}
         >
           <AnimatedNumber value={pct} decimals={1} />
           <span className="symbol">%</span>
         </div>
 
-        <p
-          className="display-italic text-2xl md:text-3xl mt-3 text-ink-soft"
-        >
+        <p className="display-italic text-2xl md:text-3xl mt-3 text-ink-soft">
           of holdings, by value, pass screening.
         </p>
       </header>
@@ -128,12 +136,21 @@ function ResultsView({ result }: { result: Result }) {
       <div className="girih-rule my-12 max-w-md reveal" style={{ animationDelay: '180ms' }} />
 
       {/* === Sub-stats row === */}
-      <div className="reveal grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-8 mb-16" style={{ animationDelay: '260ms' }}>
+      <div
+        className="reveal grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-8 mb-16"
+        style={{ animationDelay: '260ms' }}
+      >
         <Stat label="Holdings" value={String(summary.holdings)} />
         <Stat
           label="Compliant"
-          value={`${passCount}`}
-          sub={failCount > 0 ? `${failCount} failed` : undefined}
+          value={`${summary.compliant_count}`}
+          sub={
+            summary.non_compliant_count > 0
+              ? `${summary.non_compliant_count} failed`
+              : summary.pending_count > 0
+                ? `${summary.pending_count} pending`
+                : undefined
+          }
         />
         <Stat
           label="Total value"
@@ -146,11 +163,11 @@ function ResultsView({ result }: { result: Result }) {
         <Stat
           label="Purification"
           value={
-            summary.purification_owed != null
-              ? `$${summary.purification_owed.toLocaleString(undefined, { maximumFractionDigits: 0 })}`
+            summary.avg_purification_rate != null
+              ? `${summary.avg_purification_rate.toFixed(2)}%`
               : '—'
           }
-          sub="estimated"
+          sub="avg dividend rate"
         />
       </div>
 
@@ -166,7 +183,7 @@ function ResultsView({ result }: { result: Result }) {
             <tr>
               <th>Ticker</th>
               <th>Status</th>
-              <th>Methodology</th>
+              <th>Sector</th>
               <th className="text-right">Last price</th>
             </tr>
           </thead>
@@ -181,14 +198,26 @@ function ResultsView({ result }: { result: Result }) {
                   <span className="num text-base font-medium">{r.symbol}</span>
                 </td>
                 <td>
-                  <span className={`status status-${classify(r.status)}`}>
-                    {statusWord(r.status)}
-                  </span>
+                  <span className={`status status-${classify(r)}`}>{statusWord(r)}</span>
+                  {r.is_compliant === false && r.business_screen_reason && (
+                    <div
+                      className="text-xs italic text-ink-mute mt-1 max-w-[28ch]"
+                      style={{ fontFamily: 'var(--font-fraunces)' }}
+                    >
+                      {r.business_screen_reason}
+                    </div>
+                  )}
+                  {r.error && (
+                    <div
+                      className="text-xs italic text-ink-mute mt-1"
+                      style={{ fontFamily: 'var(--font-fraunces)' }}
+                    >
+                      {r.error}
+                    </div>
+                  )}
                 </td>
                 <td>
-                  <span className="text-sm text-ink-soft tracking-wide">
-                    {r.methodology || 'AAOIFI'}
-                  </span>
+                  <span className="text-sm text-ink-soft">{r.sector || '—'}</span>
                 </td>
                 <td className="text-right">
                   <span className="num text-sm text-ink-soft">
