@@ -3,6 +3,14 @@
 import { AnimatedNumber } from './AnimatedNumber';
 import { StarMark } from './StarMark';
 
+type PerMethodology = {
+  aaoifi: boolean | null;
+  djim: boolean | null;
+  ftse: boolean | null;
+  msci: boolean | null;
+  sp: boolean | null;
+};
+
 type Item = {
   symbol: string;
   is_compliant: boolean | null;
@@ -10,6 +18,7 @@ type Item = {
   business_screen_reason?: string;
   financial_screen_pass: boolean | null;
   methodology?: string;
+  per_methodology?: PerMethodology;
   purification_rate?: number | null;
   sector?: string;
   price?: number;
@@ -41,6 +50,54 @@ function statusWord(item: Item) {
   if (item.error) return 'Error';
   const c = classify(item);
   return c === 'pass' ? 'Compliant' : c === 'fail' ? 'Non-compliant' : 'Pending';
+}
+
+// Compact per-methodology row — hidden when the API didn't compute any of them
+// (sector-failure short-circuits), since "AAOIFI – · DJIM – · …" carries no info.
+function MethodologyBreakdown({ pm }: { pm?: PerMethodology }) {
+  if (!pm) return null;
+  const cells = [
+    ['AAOIFI', pm.aaoifi],
+    ['DJIM', pm.djim],
+    ['FTSE', pm.ftse],
+    ['MSCI', pm.msci],
+    ['S&P', pm.sp],
+  ] as const;
+  const known = cells.filter(([, v]) => v !== null);
+  if (known.length === 0) return null;
+
+  return (
+    <div
+      className="mt-2 flex flex-wrap gap-x-3 gap-y-0.5"
+      style={{
+        fontFamily: 'var(--font-plex-sans)',
+        fontSize: '0.625rem',
+        letterSpacing: '0.18em',
+        textTransform: 'uppercase',
+      }}
+    >
+      {cells.map(([k, v]) => (
+        <span key={k} className="inline-flex items-center gap-1">
+          <span style={{ color: 'var(--ink-mute)' }}>{k}</span>
+          <span
+            aria-label={v === true ? 'pass' : v === false ? 'fail' : 'unknown'}
+            style={{
+              color:
+                v === true
+                  ? 'var(--moss)'
+                  : v === false
+                    ? 'var(--clay)'
+                    : 'var(--ink-mute)',
+              fontWeight: 600,
+              opacity: v == null ? 0.45 : 1,
+            }}
+          >
+            {v === true ? '✓' : v === false ? '✗' : '–'}
+          </span>
+        </span>
+      ))}
+    </div>
+  );
 }
 
 // Returns the right failure-reason copy. The API gives us business_screen_reason
@@ -231,6 +288,7 @@ function ResultsView({ result }: { result: Result }) {
                       {r.error}
                     </div>
                   )}
+                  <MethodologyBreakdown pm={r.per_methodology} />
                 </td>
                 <td>
                   <span className="text-sm text-ink-soft">{r.sector || '—'}</span>

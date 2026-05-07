@@ -4,26 +4,32 @@
 import { ResultsPanel } from '@/components/ResultsPanel';
 import { StarMark } from '@/components/StarMark';
 
+const allPass = { aaoifi: true,  djim: true,  ftse: true,  msci: true,  sp: true };
+const allFail = { aaoifi: false, djim: false, ftse: false, msci: false, sp: false };
+const allUnk  = { aaoifi: null,  djim: null,  ftse: null,  msci: null,  sp: null };
+const mixed   = { aaoifi: true,  djim: false, ftse: true,  msci: true,  sp: false };
+
 const mk = (overrides: any) => ({
   business_screen_pass: true,
   financial_screen_pass: true,
   business_screen_reason: undefined,
   methodology: 'AAOIFI',
+  per_methodology: allPass,
   purification_rate: 0.012,
   ...overrides,
 });
 
 const FIXTURE = {
   results: [
-    mk({ symbol: 'AAPL', is_compliant: true,  sector: 'Technology', price: 288.17 }),
-    mk({ symbol: 'MSFT', is_compliant: true,  sector: 'Technology', price: 420.95 }),
-    mk({ symbol: 'JNJ',  is_compliant: true,  sector: 'Healthcare', price: 156.08 }),
-    mk({ symbol: 'TSLA', is_compliant: true,  sector: 'Consumer Cyclical', price: 247.93 }),
-    mk({ symbol: 'JPM',  is_compliant: false, business_screen_pass: false, business_screen_reason: 'Conventional banking — interest-based revenue exceeds threshold.', sector: 'Financial Services', price: 211.50 }),
-    mk({ symbol: 'BA',   is_compliant: false, business_screen_pass: false, business_screen_reason: 'Defense exposure exceeds revenue threshold.', sector: 'Industrials', price: 74.18 }),
-    mk({ symbol: 'NVDA', is_compliant: true,  sector: 'Technology', price: 138.07 }),
-    mk({ symbol: 'KO',   is_compliant: true,  sector: 'Consumer Defensive', price: 62.41 }),
-    mk({ symbol: 'F',    is_compliant: false, business_screen_pass: true, financial_screen_pass: false, business_screen_reason: 'Debt-to-market-cap ratio exceeds 33%.', sector: 'Consumer Cyclical', price: 10.32 }),
+    mk({ symbol: 'AAPL', is_compliant: true,  sector: 'Technology', price: 288.17, per_methodology: allPass }),
+    mk({ symbol: 'MSFT', is_compliant: true,  sector: 'Technology', price: 420.95, per_methodology: allPass }),
+    mk({ symbol: 'JNJ',  is_compliant: true,  sector: 'Healthcare', price: 156.08, per_methodology: mixed }),
+    mk({ symbol: 'TSLA', is_compliant: true,  sector: 'Consumer Cyclical', price: 247.93, per_methodology: allPass }),
+    mk({ symbol: 'JPM',  is_compliant: false, business_screen_pass: false, business_screen_reason: 'Non-compliant sector: Financial Services', sector: 'Financial Services', price: 211.50, per_methodology: allUnk }),
+    mk({ symbol: 'BA',   is_compliant: false, business_screen_pass: false, business_screen_reason: 'Defense exposure exceeds revenue threshold.', sector: 'Industrials', price: 74.18, per_methodology: allUnk }),
+    mk({ symbol: 'NVDA', is_compliant: true,  sector: 'Technology', price: 138.07, per_methodology: allPass }),
+    mk({ symbol: 'KO',   is_compliant: true,  sector: 'Consumer Defensive', price: 62.41, per_methodology: allPass }),
+    mk({ symbol: 'F',    is_compliant: false, business_screen_pass: true, financial_screen_pass: false, business_screen_reason: 'Debt-to-market-cap ratio exceeds 33%.', sector: 'Consumer Cyclical', price: 10.32, per_methodology: allFail }),
   ],
   summary: {
     holdings: 9,
