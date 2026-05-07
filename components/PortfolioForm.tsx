@@ -1,14 +1,16 @@
 'use client';
 
 import { useState } from 'react';
-import { ResultsTable } from './ResultsTable';
+import { ResultsPanel } from './ResultsPanel';
+import { StarMark } from './StarMark';
 
 type Row = { symbol: string; shares: string };
 
 const SAMPLE: Row[] = [
-  { symbol: 'AAPL', shares: '10' },
-  { symbol: 'MSFT', shares: '5' },
-  { symbol: 'JNJ', shares: '8' },
+  { symbol: 'AAPL', shares: '12' },
+  { symbol: 'MSFT', shares: '8' },
+  { symbol: 'JNJ', shares: '15' },
+  { symbol: 'TSLA', shares: '4' },
 ];
 
 export function PortfolioForm() {
@@ -26,11 +28,15 @@ export function PortfolioForm() {
   function removeRow(i: number) {
     setRows((rs) => rs.filter((_, idx) => idx !== i));
   }
+  function clearAll() {
+    setRows([{ symbol: '', shares: '' }]);
+    setResult(null);
+    setError(null);
+  }
 
   async function scan() {
     setLoading(true);
     setError(null);
-    setResult(null);
     try {
       const holdings = rows
         .filter((r) => r.symbol.trim())
@@ -48,39 +54,50 @@ export function PortfolioForm() {
       setResult(json);
     } catch (err: any) {
       setError(err?.message || 'Scan failed');
+      setResult(null);
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div className="space-y-6">
-      <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-        <div className="grid grid-cols-[1fr_120px_40px] gap-3 text-xs font-medium uppercase tracking-wide text-slate-500">
-          <div>Ticker</div>
-          <div>Shares</div>
-          <div></div>
-        </div>
-        <div className="mt-2 space-y-2">
+    <div className="grid gap-12 lg:grid-cols-[minmax(0,360px)_1fr] lg:gap-20">
+      {/* === LEFT COLUMN — entry === */}
+      <aside className="lg:sticky lg:top-12 lg:self-start">
+        <div className="kicker mb-4">I · Holdings</div>
+        <h2 className="display text-3xl mb-1">Your ledger.</h2>
+        <p className="text-sm text-ink-mute italic mb-8" style={{ fontFamily: 'var(--font-fraunces)' }}>
+          Enter the names. Numbers, when you have them.
+        </p>
+
+        <div className="space-y-1">
+          <div className="grid grid-cols-[1fr_120px_28px] gap-4 pb-2">
+            <span className="kicker">Ticker</span>
+            <span className="kicker text-right">Shares</span>
+            <span></span>
+          </div>
+
           {rows.map((r, i) => (
-            <div key={i} className="grid grid-cols-[1fr_120px_40px] gap-3">
+            <div key={i} className="grid grid-cols-[1fr_120px_28px] items-center gap-4">
               <input
                 value={r.symbol}
                 onChange={(e) => update(i, { symbol: e.target.value })}
-                placeholder="AAPL"
-                className="rounded-lg border border-slate-200 px-3 py-2 font-mono uppercase outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                placeholder="—"
+                className="hairline-input uppercase tracking-wide font-medium"
+                style={{ fontFamily: 'var(--font-plex-mono)' }}
+                spellCheck={false}
               />
               <input
                 value={r.shares}
                 onChange={(e) => update(i, { shares: e.target.value })}
-                placeholder="0"
+                placeholder="—"
                 inputMode="decimal"
-                className="rounded-lg border border-slate-200 px-3 py-2 text-right outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100"
+                className="hairline-input num"
               />
               <button
                 type="button"
                 onClick={() => removeRow(i)}
-                className="rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                className="text-ink-mute/60 hover:text-clay text-lg leading-none transition-colors"
                 aria-label="Remove row"
               >
                 ×
@@ -88,32 +105,50 @@ export function PortfolioForm() {
             </div>
           ))}
         </div>
-        <div className="mt-4 flex items-center justify-between">
-          <button
-            type="button"
-            onClick={addRow}
-            className="text-sm font-medium text-slate-600 hover:text-slate-900"
-          >
-            + Add holding
+
+        <div className="mt-6 flex items-center justify-between gap-4">
+          <button type="button" onClick={addRow} className="btn-ghost">
+            + Add line
           </button>
+          {rows.some((r) => r.symbol.trim()) && (
+            <button type="button" onClick={clearAll} className="btn-ghost">
+              Clear
+            </button>
+          )}
+        </div>
+
+        <div className="mt-10">
           <button
             type="button"
             onClick={scan}
             disabled={loading || rows.every((r) => !r.symbol.trim())}
-            className="rounded-lg bg-emerald-600 px-5 py-2 text-sm font-medium text-white shadow-sm hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+            className="btn-editorial w-full justify-center"
           >
-            {loading ? 'Scanning…' : 'Scan portfolio'}
+            {loading ? (
+              <>
+                <StarMark size={14} spin />
+                <span>Reading</span>
+              </>
+            ) : (
+              <>
+                <span>Read the portfolio</span>
+                <span aria-hidden>→</span>
+              </>
+            )}
           </button>
         </div>
-      </div>
 
-      {error && (
-        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-          {error}
-        </div>
-      )}
+        {error && (
+          <p className="mt-6 text-sm text-clay italic" style={{ fontFamily: 'var(--font-fraunces)' }}>
+            — {error}
+          </p>
+        )}
+      </aside>
 
-      {result && <ResultsTable result={result} />}
+      {/* === RIGHT COLUMN — readout === */}
+      <section className="min-w-0">
+        <ResultsPanel loading={loading} result={result} hasInput={rows.some((r) => r.symbol.trim())} />
+      </section>
     </div>
   );
 }

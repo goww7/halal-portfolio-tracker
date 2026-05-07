@@ -3,5 +3,268 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: light;
+  --paper:        #f4ede1;
+  --paper-soft:   #f9f4ea;
+  --paper-deep:   #ebe1cc;
+  --ink:          #0e0c0a;
+  --ink-soft:     #2c2620;
+  --ink-mute:     #6b5f4d;
+  --rule:         #c9bfae;
+  --moss:         #2d5a3a;
+  --moss-soft:    #6b8c70;
+  --clay:         #8b3a2f;
+  --clay-soft:    #b06b54;
+  --saffron:      #b08018;
+  --saffron-soft: #c9a557;
+
+  color-scheme: light only;
+}
+
+@layer base {
+  html {
+    color: var(--ink);
+    background: var(--paper);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: 'kern', 'liga', 'calt';
+  }
+
+  body {
+    background:
+      radial-gradient(1200px 800px at 80% -10%, rgba(176,107,84,0.06), transparent 60%),
+      radial-gradient(900px 600px at -10% 110%, rgba(45,90,58,0.05), transparent 60%),
+      var(--paper);
+    background-attachment: fixed;
+  }
+
+  /* Subtle paper grain — pure CSS, no image */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.4;
+    mix-blend-mode: multiply;
+    background-image:
+      radial-gradient(rgba(14,12,10,0.05) 1px, transparent 1px),
+      radial-gradient(rgba(14,12,10,0.04) 1px, transparent 1px);
+    background-size: 3px 3px, 7px 7px;
+    background-position: 0 0, 1px 1px;
+  }
+
+  ::selection {
+    background: var(--ink);
+    color: var(--paper);
+  }
+}
+
+@layer components {
+  /* Editorial display — Fraunces SOFT for the pull-quote stat */
+  .display {
+    font-family: var(--font-fraunces), serif;
+    font-variation-settings: 'opsz' 144, 'SOFT' 100, 'WONK' 0;
+    font-weight: 380;
+    letter-spacing: -0.025em;
+    line-height: 0.92;
+  }
+
+  .display-italic {
+    font-family: var(--font-fraunces), serif;
+    font-variation-settings: 'opsz' 144, 'SOFT' 100, 'WONK' 1;
+    font-style: italic;
+    font-weight: 360;
+    letter-spacing: -0.02em;
+  }
+
+  /* Magazine kicker — small caps, wide tracking */
+  .kicker {
+    font-family: var(--font-plex-sans), sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.22em;
+    font-size: 0.6875rem;
+    font-weight: 500;
+    color: var(--ink-mute);
+  }
+
+  /* Tabular numerals — Plex Mono with locked widths */
+  .num {
+    font-family: var(--font-plex-mono), ui-monospace, monospace;
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: 'tnum' on, 'lnum' on;
+  }
+
+  /* Hairline editorial input — underline only */
+  .hairline-input {
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid var(--rule);
+    border-radius: 0;
+    padding: 0.45rem 0.1rem;
+    font-family: var(--font-plex-sans), sans-serif;
+    color: var(--ink);
+    transition: border-color 200ms ease;
+    width: 100%;
+  }
+
+  .hairline-input:focus {
+    outline: none;
+    border-bottom-color: var(--ink);
+  }
+
+  .hairline-input::placeholder {
+    color: var(--ink-mute);
+    opacity: 0.5;
+  }
+
+  .hairline-input.num {
+    text-align: right;
+  }
+
+  /* Editorial button — thin border, generous tracking */
+  .btn-editorial {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.65rem 1.25rem;
+    border: 1px solid var(--ink);
+    background: var(--ink);
+    color: var(--paper);
+    font-family: var(--font-plex-sans), sans-serif;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 180ms ease, color 180ms ease, transform 180ms ease;
+  }
+
+  .btn-editorial:hover:not(:disabled) {
+    background: var(--paper);
+    color: var(--ink);
+  }
+
+  .btn-editorial:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+  }
+
+  .btn-ghost {
+    font-family: var(--font-plex-sans), sans-serif;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--ink-mute);
+    cursor: pointer;
+    transition: color 160ms ease;
+    background: none;
+    border: 0;
+    padding: 0;
+  }
+
+  .btn-ghost:hover {
+    color: var(--ink);
+  }
+
+  /* Status pill — editorial, no shadows, no rounded fills */
+  .status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: var(--font-fraunces), serif;
+    font-style: italic;
+    font-weight: 400;
+    font-size: 0.95rem;
+    letter-spacing: 0.005em;
+  }
+
+  .status::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  .status-pass  { color: var(--moss); }
+  .status-fail  { color: var(--clay); }
+  .status-warn  { color: var(--saffron); }
+
+  /* Editorial table */
+  .holdings {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--font-plex-sans), sans-serif;
+  }
+
+  .holdings thead th {
+    font-family: var(--font-plex-sans), sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    font-size: 0.625rem;
+    font-weight: 500;
+    color: var(--ink-mute);
+    padding: 0.85rem 0;
+    text-align: left;
+    border-bottom: 1px solid var(--ink);
+  }
+
+  .holdings tbody td {
+    padding: 1.05rem 0;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: baseline;
+  }
+
+  .holdings tbody tr:last-child td {
+    border-bottom: 0;
+  }
+
+  /* Hero stat */
+  .hero-pct {
+    font-size: clamp(5rem, 14vw, 11rem);
+  }
+
+  .hero-pct .symbol {
+    font-size: 0.45em;
+    vertical-align: super;
+    color: var(--ink-mute);
+    margin-left: 0.05em;
+    font-feature-settings: 'sups' on;
+  }
+
+  /* Reveal animation — stagger via animation-delay */
+  .reveal {
+    opacity: 0;
+    transform: translateY(8px);
+    animation: reveal 700ms cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+  }
+
+  @keyframes reveal {
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Spinning star (loading) */
+  .spin-slow {
+    animation: spin 6s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  /* Girih divider — Islamic geometric line ornament, subtle */
+  .girih-rule {
+    height: 24px;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 80 24' preserveAspectRatio='xMidYMid meet'><g fill='none' stroke='%23c9bfae' stroke-width='1' stroke-linecap='round'><path d='M0 12 L24 12'/><path d='M28 12 L52 12'/><path d='M56 12 L80 12'/><path d='M40 4 L48 12 L40 20 L32 12 Z' /><circle cx='40' cy='12' r='2.2'/></g></svg>");
+    background-repeat: repeat-x;
+    background-position: center;
+    background-size: 80px 24px;
+    opacity: 0.7;
+  }
+
+  /* Vertical fold — masthead style border */
+  .masthead {
+    border-top: 3px double var(--ink);
+    border-bottom: 1px solid var(--ink);
+  }
 }

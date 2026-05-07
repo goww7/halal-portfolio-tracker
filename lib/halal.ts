@@ -46,8 +46,9 @@ async function call(method: string, path: string, body?: unknown) {
 }
 
 function classify(raw: string): 'pass' | 'fail' | 'warn' {
-  if (/pass|compliant|halal/i.test(raw)) return 'pass';
-  if (/fail|non-?compliant|haram/i.test(raw)) return 'fail';
+  // Order matters: "non-compliant" contains "compliant", so fail must be checked first.
+  if (/fail|non[\s-]?compliant|haram|reject/i.test(raw)) return 'fail';
+  if (/pass|compliant|halal|accept/i.test(raw)) return 'pass';
   return 'warn';
 }
 
