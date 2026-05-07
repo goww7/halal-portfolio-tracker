@@ -1,5 +1,6 @@
 import { PortfolioForm } from '@/components/PortfolioForm';
 import { StarMark } from '@/components/StarMark';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 const VOLUME = 'Vol. I';
 const ISSUE = 'No. 01';
@@ -27,15 +28,23 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="hidden md:flex flex-col items-end text-right">
-            <div className="kicker mb-1">Issued</div>
-            <div
-              className="text-sm italic text-ink-soft"
-              style={{ fontFamily: 'var(--font-fraunces)' }}
-            >
-              {today}
+          <div className="hidden md:flex flex-col items-end text-right gap-3">
+            <ThemeToggle />
+            <div>
+              <div className="kicker mb-1">Issued</div>
+              <div
+                className="text-sm italic text-ink-soft"
+                style={{ fontFamily: 'var(--font-fraunces)' }}
+              >
+                {today}
+              </div>
             </div>
           </div>
+        </div>
+
+        {/* Mobile theme toggle — under the masthead, right-aligned */}
+        <div className="mt-4 md:hidden flex justify-end">
+          <ThemeToggle />
         </div>
 
         <div

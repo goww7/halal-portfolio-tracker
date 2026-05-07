@@ -34,9 +34,24 @@ export const metadata: Metadata = {
   },
 };
 
+// Inline script that runs before React hydrates, to set [data-theme] from
+// localStorage. Without this, a user who picked Night sees a flash of Day.
+const THEME_BOOT = `
+(function() {
+  try {
+    var t = localStorage.getItem('hpt-theme');
+    if (t === 'night') document.documentElement.dataset.theme = 'dark';
+    else if (t === 'day') document.documentElement.dataset.theme = 'light';
+  } catch (e) {}
+})();
+`;
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${fraunces.variable} ${plexSans.variable} ${plexMono.variable}`}>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_BOOT }} />
+      </head>
       <body className="font-sans">
         <div className="relative z-10 min-h-screen">{children}</div>
       </body>
