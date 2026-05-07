@@ -85,6 +85,20 @@ Automated screening output, **not a fatwa**. Consult a qualified scholar for per
 
 ---
 
+## Related projects
+
+Other open-source tools in the Halal Terminal ecosystem:
+
+| Project | What it is |
+|---|---|
+| [**halal-discord-bot**](https://github.com/goww7/halal-discord-bot) | Discord bot — `/halal`, `/portfolio`, `/trending` slash commands |
+| [**halal-pine**](https://github.com/goww7/halal-pine) | TradingView Pine v5 indicator with daily-refreshed compliance data |
+| [**halalterminal-claude-skills**](https://github.com/goww7/halalterminal-claude-skills) | Claude Code plugin with screening skills + portfolio-builder subagent |
+| [**halalterminal-mcp**](https://github.com/goww7/halalterminal-mcp) | MCP server for any MCP-compatible client (Cursor, Cline, Codex…) |
+| [**yassir-oss**](https://github.com/goww7/yassir-oss) | Open-source ReAct agent for financial research |
+
+---
+
 ## License
 
 MIT — see [LICENSE](LICENSE).
