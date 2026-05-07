@@ -23,7 +23,10 @@ const plexMono = IBM_Plex_Mono({
   variable: '--font-plex-mono',
 });
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://halal-portfolio-tracker.vercel.app';
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: 'Halal Portfolio — A Compliance Journal',
   description:
     'A quiet, editorial reading of your portfolio under five Shariah-screening methodologies. Powered by Halal Terminal.',
@@ -31,6 +34,12 @@ export const metadata: Metadata = {
     title: 'Halal Portfolio — A Compliance Journal',
     description: 'Editorial Shariah-compliance tracker for your stocks.',
     type: 'website',
+    url: siteUrl,
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Halal Portfolio — A Compliance Journal',
+    description: 'Editorial Shariah-compliance tracker for your stocks.',
   },
 };
 
