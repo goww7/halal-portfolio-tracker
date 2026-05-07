@@ -43,6 +43,22 @@ function statusWord(item: Item) {
   return c === 'pass' ? 'Compliant' : c === 'fail' ? 'Non-compliant' : 'Pending';
 }
 
+// Returns the right failure-reason copy. The API gives us business_screen_reason
+// even when the BUSINESS screen passed (the string then reads 'Business activity
+// is compliant' — confusing as a failure reason). So we route by which screen
+// actually failed.
+function failureReason(item: Item): string {
+  if (item.business_screen_pass === false && item.business_screen_reason) {
+    return item.business_screen_reason;
+  }
+  if (item.financial_screen_pass === false) {
+    return 'Failed financial screen — debt or interest exposure above the AAOIFI threshold.';
+  }
+  // Both screens passed but is_compliant is still false — fall back to whatever
+  // the API gave us, or a generic explanation.
+  return item.business_screen_reason || 'Failed AAOIFI screening.';
+}
+
 export function ResultsPanel({
   loading,
   result,
@@ -199,12 +215,12 @@ function ResultsView({ result }: { result: Result }) {
                 </td>
                 <td>
                   <span className={`status status-${classify(r)}`}>{statusWord(r)}</span>
-                  {r.is_compliant === false && r.business_screen_reason && (
+                  {r.is_compliant === false && (
                     <div
                       className="text-xs italic text-ink-mute mt-1 max-w-[28ch]"
                       style={{ fontFamily: 'var(--font-fraunces)' }}
                     >
-                      {r.business_screen_reason}
+                      {failureReason(r)}
                     </div>
                   )}
                   {r.error && (
