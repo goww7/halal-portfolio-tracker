@@ -27,6 +27,16 @@ export type ScanResult = {
   };
 };
 
+export class HalalApiError extends Error {
+  status: number;
+  code?: string;
+  constructor(msg: string, status: number, code?: string) {
+    super(msg);
+    this.status = status;
+    this.code = code;
+  }
+}
+
 async function call(method: string, path: string, body?: unknown) {
   const res = await fetch(`${BASE_URL}${path}`, {
     method,
@@ -41,7 +51,10 @@ async function call(method: string, path: string, body?: unknown) {
   const text = await res.text();
   let json: any;
   try { json = JSON.parse(text); } catch { json = { raw: text }; }
-  if (!res.ok) throw new Error(json?.error || json?.message || `HTTP ${res.status}`);
+  if (!res.ok) {
+    const msg = json?.message || json?.error || `HTTP ${res.status}`;
+    throw new HalalApiError(msg, res.status, json?.code);
+  }
   return json;
 }
 
@@ -64,8 +77,11 @@ export function badgeFor(status: string) {
 export async function scanPortfolio(holdings: Holding[]): Promise<ScanResult> {
   const symbols = holdings.map((h) => h.symbol.toUpperCase());
 
+  // Don't swallow auth errors — they masquerade as 'all non-compliant' downstream.
+  // If the screen call fails, propagate. Quote failures are non-fatal (we just
+  // skip price/value computation).
   const [scan, quotes] = await Promise.all([
-    call('POST', '/api/portfolio/scan', { symbols }).catch(() => null),
+    call('POST', '/api/portfolio/scan', { symbols }),
     call('POST', '/api/quotes/batch', { symbols }).catch(() => null),
   ]);
 
