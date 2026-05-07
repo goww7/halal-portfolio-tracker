@@ -88,7 +88,7 @@ export default function HomePage() {
               >
                 Halal Terminal
               </a>{' '}
-              — free tier, two hundred screenings the month, no card.
+              — free tier, fifty requests the month, no card.
             </p>
           </div>
 
