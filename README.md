@@ -85,6 +85,20 @@ Automated screening output, **not a fatwa**. Consult a qualified scholar for per
 
 ---
 
+## Learn more
+
+- [Halal ETF analysis](https://www.halalterminal.com/research/halal-etf-analysis)
+- [Is my stock halal? Screener](https://www.halalterminal.com/stocks)
+- [Shariah-compliant ETFs compared (2026)](https://www.halalterminal.com/research/sharia-etf-comprehensive-analysis)
+- [What is Islamic finance?](https://www.halalterminal.com/research/what-is-islamic-finance)
+- [API reference](https://api.halalterminal.com/api-reference)
+
+## Part of the Halal Terminal ecosystem
+
+[Website](https://www.halalterminal.com) · [API](https://api.halalterminal.com/api-reference) · [Python SDK](https://github.com/goww7/halalterminal-sdk-python) · [JS SDK](https://github.com/goww7/halalterminal-sdk-js) · [MCP server](https://github.com/goww7/halalterminal-mcp) · [Claude plugin](https://github.com/goww7/halalterminal-claude-skills) · [Discord bot](https://github.com/goww7/halal-discord-bot) · [TradingView indicator](https://github.com/goww7/halal-pine)
+
+---
+
 ## Related projects
 
 Other open-source tools in the Halal Terminal ecosystem:
