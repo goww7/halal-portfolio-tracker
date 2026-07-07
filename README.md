@@ -33,7 +33,7 @@ Enter your stock holdings → get per-stock Shariah compliance, portfolio-level 
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fgoww7%2Fhalal-portfolio-tracker&env=HALAL_TERMINAL_API_KEY&envDescription=Free%20key%20at%20halalterminal.com&envLink=https%3A%2F%2Fhalalterminal.com)
 
-You'll be prompted for `HALAL_TERMINAL_API_KEY` — grab a [free key here](https://halalterminal.com) (50 requests/month, no credit card).
+You'll be prompted for `HALAL_TERMINAL_API_KEY` — grab a [free key here](https://halalterminal.com) (500 tokens/month, no credit card).
 
 ---
 
