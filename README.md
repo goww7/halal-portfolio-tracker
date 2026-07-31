@@ -118,3 +118,9 @@ Other open-source tools in the Halal Terminal ecosystem:
 MIT — see [LICENSE](LICENSE).
 
 <p align="center"><sub>Built on top of <a href="https://halalterminal.com">Halal Terminal</a>.</sub></p>
+
+
+---
+
+Part of the [Halal Terminal open ecosystem](https://github.com/goww7/awesome-islamic-finance):
+[API](https://api.halalterminal.com) · [MCP server](https://github.com/goww7/halalterminal-mcp) · [Python SDK](https://github.com/goww7/halalterminal-sdk-python) · [JS SDK](https://github.com/goww7/halalterminal-sdk-js) · [Datasets](https://github.com/goww7/sp500-shariah-compliance) · [Awesome Islamic Finance](https://github.com/goww7/awesome-islamic-finance)
